@@ -71,11 +71,19 @@ Understand the pathology reports yet to be completed
     ##           Carcinoma                                            
     ## ---------------------------------------------------------------
 
-![](path_na_analysis_files/figure-markdown_github/tfl-1.png)
+``` r
+p1
+```
+
+![](path_na_analysis_files/figure-markdown_github/unnamed-chunk-1-1.png)
 
     ## [1] 464
 
-![](path_na_analysis_files/figure-markdown_github/tfl-2.png)
+``` r
+p2
+```
+
+![](path_na_analysis_files/figure-markdown_github/unnamed-chunk-3-1.png)
 
     ## 
     ## Attaching package: 'maps'
@@ -84,6 +92,10 @@ Understand the pathology reports yet to be completed
     ## 
     ##     map
 
-![](path_na_analysis_files/figure-markdown_github/unnamed-chunk-1-1.png)
-
     ## Saving 7 x 5 in image
+
+``` r
+usamap
+```
+
+![](path_na_analysis_files/figure-markdown_github/unnamed-chunk-5-1.png)

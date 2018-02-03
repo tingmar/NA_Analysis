@@ -59,9 +59,14 @@ p1 <- ggplot(data=sum_na_crf,
   coord_flip() +
   ggtitle("CCGA pathology reports yet to be completed")  +
   theme(plot.title = element_text(size=12, hjust = 0.5))
-  
-p1
 
+```
+
+```{r}
+p1
+```
+
+```{r, echo=FALSE}
 sum(sum_na_crf$n_missing)
 
 
@@ -87,6 +92,9 @@ p2 <- ggplot(data=sum_na_crf_method,
   ggtitle("CCGA pathology reports yet to be completed")  +
   theme(plot.title = element_text(size=12, hjust = 0.5))
   
+```
+
+```{r}
 p2
 ```
 
@@ -106,8 +114,9 @@ usamap <- ggplot() +
   geom_point(data=path_df, aes(longitude, latitude), col = "purple", size=4, alpha=0.5, inherit.aes = FALSE) +
   geom_point(data=path_na, mapping = (aes(longitude, latitude)), col = "red", size=4, alpha=0.1, inherit.aes = FALSE)
 
-usamap
-
 ggsave(here("fig", "on_us_map_1.png"), usamap)
 ```
 
+```{r}
+usamap
+```
