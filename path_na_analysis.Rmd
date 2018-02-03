@@ -1,0 +1,113 @@
+---
+title: "path_na_analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(naniar)
+library(here)
+library(janitor)
+
+```
+## Understand the pathology reports yet to be completed
+
+```{r data, include=FALSE, echo = TRUE, result=FALSE}
+source(here("R", "01_get_data.R"))
+```
+
+```{r tfl, result=iris, echo=FALSE}
+path <- read_csv(here("data", "l_path_crf_status_google_geo.csv"))
+
+p0 <- ggplot(data = path,
+             aes(x = cancer_type,
+                 y = complete)) +
+  geom_point()
+
+#summary of not completed path eCRF by cancer type
+sum_na_cancer_type <- path %>%
+  group_by(cancer_type) %>%
+  miss_var_summary() %>% 
+  dplyr::filter(n_missing >0, variable=="complete") %>% 
+  dplyr::arrange (desc(n_missing))
+
+#print(sum_na_cancer_type)
+pander::pandoc.table(sum_na_cancer_type)
+
+#summary of not completed path eCRF by cancer type
+sum_na_crf <- path %>%
+  group_by(name_of_pathology_crf) %>%
+  miss_var_summary() %>% 
+  dplyr::filter(n_missing >0, variable=="complete") %>% 
+  dplyr::arrange (desc(n_missing))
+
+#print(sum_na_crf)
+#pander::pandoc.table(sum_na_crf)
+
+#plotting
+sum_na_crf$crf_f <- factor(sum_na_crf$name_of_pathology_crf, 
+                           levels= sum_na_crf$name_of_pathology_crf[order(sum_na_crf$n_missing)])
+
+
+p1 <- ggplot(data=sum_na_crf,
+             mapping=(aes(x = crf_f, y=n_missing))) + 
+  geom_bar(stat="identity") +
+  ylim(0,180) +
+  geom_text(aes(y=n_missing, label=paste0(round(percent, 1), "%")), vjust=-0.1,  hjust=-2,  size=3) +
+  coord_flip() +
+  ggtitle("CCGA pathology reports yet to be completed")  +
+  theme(plot.title = element_text(size=12, hjust = 0.5))
+  
+p1
+
+sum(sum_na_crf$n_missing)
+
+
+
+# facet by tissue collection methods
+#summary of not completed path eCRF by cancer type
+sum_na_crf_method <- path %>%
+  group_by(name_of_pathology_crf, method_of_tissue_collection) %>%
+  miss_var_summary() %>% 
+  dplyr::filter(n_missing >0, variable=="complete") %>% 
+  dplyr::mutate(method_of_tissue_collection = if_else(method_of_tissue_collection==".",
+                                                      "Not Entered",
+                                                      method_of_tissue_collection)) %>% 
+  dplyr::arrange (desc(n_missing)) 
+
+p2 <- ggplot(data=sum_na_crf_method,
+             mapping=(aes(x = reorder(name_of_pathology_crf,n_missing) , y=n_missing))) + 
+  geom_bar(stat="identity") +
+  ylim(0,120) +
+  geom_text(aes(y=n_missing, label=n_missing), vjust=-0.1,  hjust=-2,  size=2) + 
+  facet_wrap(~method_of_tissue_collection, ncol = 2) + 
+  coord_flip() +
+  ggtitle("CCGA pathology reports yet to be completed")  +
+  theme(plot.title = element_text(size=12, hjust = 0.5))
+  
+p2
+```
+
+```{r, echo=FALSE}
+# on the US map-----------------------------
+# blank path eCRF by geo-site
+path_na <- path %>% 
+  dplyr::filter(!is.na(complete))
+
+##us map
+states <- map_data("state")
+states$state_1 <- state.abb[match(toupper(states$region), toupper(state.name))]
+path_df <- data.frame(path)
+
+usamap <- ggplot() +
+  geom_polygon(data= states, aes(x=long, y=lat, group=state_1), fill="white", colour="black") +
+  geom_point(data=path_df, aes(longitude, latitude), col = "purple", size=4, alpha=0.5, inherit.aes = FALSE) +
+  geom_point(data=path_na, mapping = (aes(longitude, latitude)), col = "red", size=4, alpha=0.1, inherit.aes = FALSE)
+
+usamap
+
+ggsave(here("fig", "on_us_map_1.png"), usamap)
+```
+
