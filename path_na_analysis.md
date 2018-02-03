@@ -1,73 +1,89 @@
-Understand the pathology reports that need to be completed
-----------------------------------------------------------
+path\_na\_analysis
+================
 
-    source(here("R", "01_get_data.R"))
-
-    ## Parsed with column specification:
-    ## cols(
-    ##   `Medrio ID` = col_integer(),
-    ##   Batch = col_character(),
-    ##   `Site ID` = col_character(),
-    ##   `Cancer Type` = col_character(),
-    ##   Sex = col_character(),
-    ##   Age = col_integer(),
-    ##   `Method of Tissue Collection` = col_character(),
-    ##   `Date of Clinical Procedure` = col_character(),
-    ##   `Complete?` = col_character(),
-    ##   `Which data is incomplete?` = col_character(),
-    ##   `Additional pathology report needed` = col_character(),
-    ##   `Name of Pathology CRF` = col_character(),
-    ##   `Path eCRF SDV'd` = col_character(),
-    ##   `MD draft query text` = col_character(),
-    ##   `Query Message` = col_character(),
-    ##   `CDM Action` = col_character(),
-    ##   `Site Response` = col_character(),
-    ##   `Additional Notes` = col_character()
-    ## )
-
-    source(here("R", "02_na_summary.R"))
+Understand the pathology reports yet to be completed
+----------------------------------------------------
 
     ## Parsed with column specification:
     ## cols(
     ##   medrio_id = col_integer(),
     ##   batch = col_character(),
-    ##   site_id = col_character(),
+    ##   siteid = col_character(),
     ##   cancer_type = col_character(),
     ##   sex = col_character(),
     ##   age = col_integer(),
     ##   method_of_tissue_collection = col_character(),
     ##   date_of_clinical_procedure = col_character(),
     ##   complete = col_character(),
-    ##   name_of_pathology_crf = col_character()
+    ##   name_of_pathology_crf = col_character(),
+    ##   state = col_character(),
+    ##   zip_code = col_integer(),
+    ##   clean_zip = col_character(),
+    ##   latitude = col_double(),
+    ##   longitude = col_double()
     ## )
 
-R Markdown
-----------
+    ## 
+    ## ---------------------------------------------------------------
+    ##          cancer_type            variable   n_missing   percent 
+    ## ------------------------------ ---------- ----------- ---------
+    ##            Breast,              complete      150       19.18  
+    ## 
+    ##           Prostate,             complete      120       45.98  
+    ## 
+    ##             Lung,               complete      55        12.56  
+    ## 
+    ##          Colorectal,            complete      36        23.53  
+    ## 
+    ##            Uterine,             complete      36        45.57  
+    ## 
+    ##          Esophageal,            complete      19        35.19  
+    ## 
+    ##             Renal,              complete      12        17.65  
+    ## 
+    ##           Pancreas,             complete       9        14.06  
+    ## 
+    ##           Melanoma,             complete       8        18.18  
+    ## 
+    ##            Ovarian,             complete       8         16    
+    ## 
+    ##        Ovarian,Uterine,         complete       2         100   
+    ## 
+    ##             Other,              complete       1       0.4202  
+    ## 
+    ##  Melanoma,Other,squamous cell   complete       1         100   
+    ##       carcinoma in situ                                        
+    ## 
+    ##          Lung,Other,            complete       1        11.11  
+    ## 
+    ##         Lung,Pancreas,          complete       1         50    
+    ## 
+    ##       Melanoma,Other,BCC        complete       1         100   
+    ## 
+    ##         Breast,Other,           complete       1         100   
+    ## 
+    ##        Prostate,Renal,          complete       1         100   
+    ## 
+    ##     Ovarian,Other,parietal      complete       1         100   
+    ##           peritoneum                                           
+    ## 
+    ##   Melanoma,Other,Basal Cell     complete       1         100   
+    ##           Carcinoma                                            
+    ## ---------------------------------------------------------------
 
-This is an R Markdown document. Markdown is a simple formatting syntax
-for authoring HTML, PDF, and MS Word documents. For more details on
-using R Markdown see <http://rmarkdown.rstudio.com>.
+![](path_na_analysis_files/figure-markdown_github/tfl-1.png)
 
-When you click the **Knit** button a document will be generated that
-includes both content as well as the output of any embedded R code
-chunks within the document. You can embed an R code chunk like this:
+    ## [1] 464
 
-    summary(cars)
+![](path_na_analysis_files/figure-markdown_github/tfl-2.png)
 
-    ##      speed           dist       
-    ##  Min.   : 4.0   Min.   :  2.00  
-    ##  1st Qu.:12.0   1st Qu.: 26.00  
-    ##  Median :15.0   Median : 36.00  
-    ##  Mean   :15.4   Mean   : 42.98  
-    ##  3rd Qu.:19.0   3rd Qu.: 56.00  
-    ##  Max.   :25.0   Max.   :120.00
+    ## 
+    ## Attaching package: 'maps'
 
-Including Plots
----------------
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     map
 
-You can also embed plots, for example:
+![](path_na_analysis_files/figure-markdown_github/unnamed-chunk-1-1.png)
 
-![](path_na_analysis_files/figure-markdown_strict/pressure-1.png)
-
-Note that the `echo = FALSE` parameter was added to the code chunk to
-prevent printing of the R code that generated the plot.
+    ## Saving 7 x 5 in image
