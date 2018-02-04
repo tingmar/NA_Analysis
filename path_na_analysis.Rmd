@@ -18,7 +18,7 @@ library(janitor)
 source(here("R", "01_get_data.R"))
 ```
 
-```{r tfl, result=iris, echo=FALSE}
+```{r table1,  echo=FALSE}
 path <- read_csv(here("data", "l_path_crf_status_google_geo.csv"))
 
 p0 <- ggplot(data = path,
@@ -28,24 +28,31 @@ p0 <- ggplot(data = path,
 
 #summary of not completed path eCRF by cancer type
 sum_na_cancer_type <- path %>%
-  group_by(cancer_type) %>%
+  dplyr::add_tally()  %>% 
+  dplyr::rename(total=n)  %>%
+  group_by(total, cancer_type) %>%
   miss_var_summary() %>% 
   dplyr::filter(n_missing >0, variable=="complete") %>% 
-  dplyr::arrange (desc(n_missing))
-
+  dplyr::arrange (desc(n_missing)) %>% 
+  dplyr::mutate(n_missing_cum = cumsum(n_missing)) 
+  
 #print(sum_na_cancer_type)
-pander::pandoc.table(sum_na_cancer_type)
 
 #summary of not completed path eCRF by cancer type
 sum_na_crf <- path %>%
-  group_by(name_of_pathology_crf) %>%
+  dplyr::add_tally()  %>%
+  dplyr::rename(total=n)  %>%
+  group_by(total, name_of_pathology_crf) %>%
   miss_var_summary() %>% 
   dplyr::filter(n_missing >0, variable=="complete") %>% 
-  dplyr::arrange (desc(n_missing))
+  dplyr::arrange (desc(n_missing)) %>% 
+  dplyr::mutate(n_missing_cum = cumsum(n_missing)) 
 
-#print(sum_na_crf)
-#pander::pandoc.table(sum_na_crf)
+#print(sum_na_crf) 
+names(sum_na_crf)
+```
 
+```{r plot1,  echo=FALSE}
 #plotting
 sum_na_crf$crf_f <- factor(sum_na_crf$name_of_pathology_crf, 
                            levels= sum_na_crf$name_of_pathology_crf[order(sum_na_crf$n_missing)])
@@ -60,18 +67,21 @@ p1 <- ggplot(data=sum_na_crf,
   ggtitle("CCGA pathology reports yet to be completed")  +
   theme(plot.title = element_text(size=12, hjust = 0.5))
 
+sum(sum_na_crf$n_missing)
+
 ```
 
 ```{r}
+sum_na_cancer_type
+sum_na_crf
+#pander::pandoc.table(sum_na_crf)
 p1
 ```
 
 ```{r, echo=FALSE}
 sum(sum_na_crf$n_missing)
 
-
-
-# facet by tissue collection methods
+# facet by tissue collection methods-------------
 #summary of not completed path eCRF by cancer type
 sum_na_crf_method <- path %>%
   group_by(name_of_pathology_crf, method_of_tissue_collection) %>%
@@ -99,22 +109,28 @@ p2
 ```
 
 ```{r, echo=FALSE}
-# on the US map-----------------------------
+#on the US map-----------------------------
 # blank path eCRF by geo-site
 path_na <- path %>% 
-  dplyr::filter(!is.na(complete))
+  dplyr::filter(!is.na(complete)) %>%
+  dplyr::add_count(longitude)
+
+path_df <- path %>% 
+  add_count(longitude) %>% 
+  bind_shadow() 
 
 ##us map
 states <- map_data("state")
 states$state_1 <- state.abb[match(toupper(states$region), toupper(state.name))]
-path_df <- data.frame(path)
+
+# usamap <- ggplot() +
+#   geom_polygon(data= states, aes(x=long, y=lat, group=state_1), fill="white", colour="black") +
+#   geom_point(data=path_df, aes(longitude, latitude, size=n, color=complete_NA),  alpha=0.1, inherit.aes = FALSE) 
 
 usamap <- ggplot() +
   geom_polygon(data= states, aes(x=long, y=lat, group=state_1), fill="white", colour="black") +
-  geom_point(data=path_df, aes(longitude, latitude), col = "purple", size=4, alpha=0.5, inherit.aes = FALSE) +
-  geom_point(data=path_na, mapping = (aes(longitude, latitude)), col = "red", size=4, alpha=0.1, inherit.aes = FALSE)
-
-ggsave(here("fig", "on_us_map_1.png"), usamap)
+  geom_point(data=path_df, aes(longitude, latitude, size=n), col = "purple", alpha=0.1, inherit.aes = FALSE) +
+  geom_point(data=path_na, aes(longitude, latitude, size=n), col = "orange", alpha=0.1, inherit.aes = FALSE)
 ```
 
 ```{r}
