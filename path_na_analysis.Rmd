@@ -10,6 +10,7 @@ library(tidyverse)
 library(naniar)
 library(here)
 library(janitor)
+library(fs)
 
 ```
 ## Understand the pathology reports yet to be completed
@@ -19,7 +20,16 @@ source(here("R", "01_get_data.R"))
 ```
 
 ```{r table1,  echo=FALSE}
-path <- read_csv(here("data", "l_path_crf_status_google_geo.csv"))
+
+###NEED TO GET PROJECT INFORMATION FROM ADSL #####
+bouquet <- c("Azalea", "Begonia", "Chrysanthemum", "Dahlia", "Edelweiss",
+             "Freesia", "Gardenia", "Hydrangea", "Iris", "Jasmine", "Kalmia",
+             "Lilac", "Magnolia", "Nemesia"
+)
+
+path <- read_csv(here("data", "l_path_crf_status_google_geo.csv")) %>% 
+  mutate(bouquet=if_else(batch %in% bouquet, "bouquet", "not_assigned")) 
+
 
 p0 <- ggplot(data = path,
              aes(x = cancer_type,
@@ -30,39 +40,58 @@ p0 <- ggplot(data = path,
 sum_na_cancer_type <- path %>%
   dplyr::add_tally()  %>% 
   dplyr::rename(total=n)  %>%
-  group_by(total, cancer_type) %>%
+  dplyr::add_count(cancer_type)  %>% 
+  dplyr::rename(n_by_cancer_type =n)  %>%
+  group_by(total, n_by_cancer_type, cancer_type) %>%
   miss_var_summary() %>% 
   dplyr::filter(n_missing >0, variable=="complete") %>% 
   dplyr::arrange (desc(n_missing)) %>% 
   dplyr::mutate(n_missing_cum = cumsum(n_missing)) 
-  
+
 #print(sum_na_cancer_type)
 
 #summary of not completed path eCRF by cancer type
 sum_na_crf <- path %>%
   dplyr::add_tally()  %>%
   dplyr::rename(total=n)  %>%
-  group_by(total, name_of_pathology_crf) %>%
+  dplyr::add_count(formname)  %>% 
+  dplyr::rename(n_by_path_form =n)  %>%
+  group_by(total, n_by_path_form, formname) %>%
   miss_var_summary() %>% 
   dplyr::filter(n_missing >0, variable=="complete") %>% 
   dplyr::arrange (desc(n_missing)) %>% 
   dplyr::mutate(n_missing_cum = cumsum(n_missing)) 
 
-#print(sum_na_crf) 
-names(sum_na_crf)
 ```
 
 ```{r plot1,  echo=FALSE}
 #plotting
-sum_na_crf$crf_f <- factor(sum_na_crf$name_of_pathology_crf, 
-                           levels= sum_na_crf$name_of_pathology_crf[order(sum_na_crf$n_missing)])
+##All of Path Report--Completed or Not started yet
+path <- path %>% 
+  dplyr::mutate(complete_fill = if_else(is.na(complete), "blank", complete)) %>% 
+  dplyr::add_count(formname)
+                
+p0 <- ggplot(data=path,
+             mapping=(aes(x = reorder(formname, n), fill=complete_fill))) + 
+  geom_bar() +
+#  ylim(0,5000) +
+#  geom_text(aes(y=n_missing, label=paste0(round(percent, 1), "%")), vjust=-0.1,  hjust=-2,  size=2) +
+  coord_flip() +
+  ggtitle("CCGA pathology reports")  +
+  theme(plot.title = element_text(size=12, hjust = 0.5)) +
+  theme(legend.position = "bottom")
+
+
+##Path Not started yet
+sum_na_crf$crf_f <- factor(sum_na_crf$formname, 
+                           levels= sum_na_crf$formname[order(sum_na_crf$n_missing)])
 
 
 p1 <- ggplot(data=sum_na_crf,
              mapping=(aes(x = crf_f, y=n_missing))) + 
   geom_bar(stat="identity") +
-  ylim(0,180) +
-  geom_text(aes(y=n_missing, label=paste0(round(percent, 1), "%")), vjust=-0.1,  hjust=-2,  size=3) +
+  ylim(0,1200) +
+  geom_text(aes(y=n_missing, label=paste0(round(percent, 1), "%")), vjust=-0.1,  hjust=-2,  size=2) +
   coord_flip() +
   ggtitle("CCGA pathology reports yet to be completed")  +
   theme(plot.title = element_text(size=12, hjust = 0.5))
@@ -75,29 +104,36 @@ sum(sum_na_crf$n_missing)
 sum_na_cancer_type
 sum_na_crf
 #pander::pandoc.table(sum_na_crf)
+p0
 p1
 ```
 
 ```{r, echo=FALSE}
 sum(sum_na_crf$n_missing)
 
-# facet by tissue collection methods-------------
+# facet by classification study-------------
 #summary of not completed path eCRF by cancer type
-sum_na_crf_method <- path %>%
-  group_by(name_of_pathology_crf, method_of_tissue_collection) %>%
+###NEED TO GET PROJECT INFORMATION FROM ADSL #####
+bouquet <- c("Azalea", "Begonia", "Chrysanthemum", "Dahlia", "Edelweiss",
+             "Freesia", "Gardenia", "Hydrangea", "Iris", "Jasmine", "Kalmia",
+             "Lilac", "Magnolia", "Nemesia"
+             )
+
+sum_na_crf_bouquet <- path %>%
+#  gtools::na.replace(batch, "Not_Assigned")  %>%
+#  mutate(bouquet=if_else(batch %in% bouquet, "bouquet", "not_assigned")) %>% 
+  group_by(formname, bouquet) %>%
   miss_var_summary() %>% 
   dplyr::filter(n_missing >0, variable=="complete") %>% 
-  dplyr::mutate(method_of_tissue_collection = if_else(method_of_tissue_collection==".",
-                                                      "Not Entered",
-                                                      method_of_tissue_collection)) %>% 
+  dplyr::mutate(bouquet = if_else(bouquet==".", "Not Entered", bouquet)) %>% 
   dplyr::arrange (desc(n_missing)) 
 
-p2 <- ggplot(data=sum_na_crf_method,
-             mapping=(aes(x = reorder(name_of_pathology_crf,n_missing) , y=n_missing))) + 
+p2 <- ggplot(data=sum_na_crf_bouquet,
+             mapping=(aes(x = reorder(formname,n_missing) , y=n_missing))) + 
   geom_bar(stat="identity") +
-  ylim(0,120) +
+  ylim(0,1200) +
   geom_text(aes(y=n_missing, label=n_missing), vjust=-0.1,  hjust=-2,  size=2) + 
-  facet_wrap(~method_of_tissue_collection, ncol = 2) + 
+  facet_wrap(~bouquet, ncol = 2) + 
   coord_flip() +
   ggtitle("CCGA pathology reports yet to be completed")  +
   theme(plot.title = element_text(size=12, hjust = 0.5))
@@ -115,13 +151,15 @@ path_na <- path %>%
   dplyr::filter(!is.na(complete)) %>%
   dplyr::add_count(longitude)
 
+##us map
+states <- map_data("state")
+states$state_1 <- state.abb[match(toupper(states$region), toupper(state.name))]
 path_df <- path %>% 
   add_count(longitude) %>% 
   bind_shadow() 
 
-##us map
-states <- map_data("state")
-states$state_1 <- state.abb[match(toupper(states$region), toupper(state.name))]
+chk <- plyr::count(path_df, c("complete_NA", "latitude", "longitude"))  %>%
+  dplyr::group_by(latitude)
 
 # usamap <- ggplot() +
 #   geom_polygon(data= states, aes(x=long, y=lat, group=state_1), fill="white", colour="black") +
@@ -129,8 +167,10 @@ states$state_1 <- state.abb[match(toupper(states$region), toupper(state.name))]
 
 usamap <- ggplot() +
   geom_polygon(data= states, aes(x=long, y=lat, group=state_1), fill="white", colour="black") +
-  geom_point(data=path_df, aes(longitude, latitude, size=n), col = "purple", alpha=0.1, inherit.aes = FALSE) +
-  geom_point(data=path_na, aes(longitude, latitude, size=n), col = "orange", alpha=0.1, inherit.aes = FALSE)
+  geom_point(data=path_df, aes(longitude, latitude, size=n), col = "purple", alpha=0.5, inherit.aes = FALSE, show.legend = TRUE) +
+#  theme(legend.position = "bottom") +
+  geom_point(data=path_na, aes(longitude, latitude, size=n), col = "orange", alpha=0.5, inherit.aes = FALSE,
+show.legend = TRUE) 
 ```
 
 ```{r}
